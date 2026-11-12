@@ -1,0 +1,6 @@
+{
+  "name": "TypeFlow - Offline Typing Speed Test",
+  "description": "Production-quality, offline-first typing speed test desktop application featuring precision metrics, Chart.js telemetry, synthesized mechanical switch acoustics, and a cyberpunk neon aesthetic.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
