@@ -142,7 +142,7 @@ export const PASSAGES: Passage[] = [
     author: 'Albert Camus',
     difficulty: 'medium',
     category: 'philosophy',
-    content: 'The struggle itself toward the heights is enough to fill a man’s heart. One must imagine Sisyphus happy. He knows himself to be the master of his days, and in that subtle moment when man contemplates his life, he turns to his rock.',
+    content: "The struggle itself toward the heights is enough to fill a man's heart. One must imagine Sisyphus happy. He knows himself to be the master of his days, and in that subtle moment when man contemplates his life, he turns to his rock.",
   },
   {
     id: 'med-4',
@@ -158,7 +158,7 @@ export const PASSAGES: Passage[] = [
     author: 'Carl Sagan',
     difficulty: 'medium',
     category: 'philosophy',
-    content: 'Look again at that dot. That’s here. That’s home. That’s us. On it everyone you love, everyone you know, everyone you ever heard of, every human being who ever was, lived out their lives on a mote of dust suspended in a sunbeam.',
+    content: "Look again at that dot. That's here. That's home. That's us. On it everyone you love, everyone you know, everyone you ever heard of, every human being who ever was, lived out their lives on a mote of dust suspended in a sunbeam.",
   },
 
   // --- HARD PASSAGES ---
@@ -199,6 +199,86 @@ export const PASSAGES: Passage[] = [
   ...CODE_SNIPPETS,
 ];
 
+const WEAK_KEY_WORD_BANK = [
+  'about', 'above', 'acquire', 'active', 'adjust', 'advance', 'always', 'amazing', 'among', 'anchor',
+  'answer', 'appear', 'archive', 'around', 'aspect', 'balance', 'beacon', 'beauty', 'became', 'before',
+  'behind', 'below', 'beyond', 'binary', 'black', 'blazing', 'bridge', 'bright', 'broken', 'buffer',
+  'build', 'burden', 'button', 'cache', 'calmly', 'camera', 'canvas', 'carbon', 'center', 'change',
+  'charge', 'choice', 'choose', 'circle', 'clarity', 'classic', 'clean', 'clever', 'clock', 'cloud',
+  'cluster', 'coding', 'collect', 'column', 'combine', 'common', 'compare', 'complex', 'compute', 'concept',
+  'confirm', 'connect', 'context', 'control', 'convert', 'corner', 'cosmic', 'create', 'credit', 'crystal',
+  'custom', 'cycle', 'damage', 'dancer', 'danger', 'darken', 'dashed', 'decide', 'decode', 'deeply',
+  'default', 'define', 'degree', 'delete', 'deliver', 'demand', 'depend', 'deploy', 'design', 'detail',
+  'detect', 'device', 'dialog', 'digest', 'direct', 'divide', 'domain', 'double', 'driven', 'dynamic',
+  'eager', 'earth', 'easily', 'echoes', 'editor', 'effect', 'effort', 'either', 'emerge', 'empire',
+  'enable', 'encode', 'energy', 'engine', 'enough', 'ensure', 'entire', 'entity', 'equal', 'escape',
+  'estate', 'ethics', 'event', 'every', 'exact', 'example', 'exceed', 'except', 'expand', 'expect',
+  'expert', 'export', 'extend', 'extra', 'fabric', 'factor', 'fading', 'failed', 'fairly', 'famous',
+  'faster', 'faulty', 'figure', 'filter', 'final', 'finger', 'finish', 'flight', 'flower', 'fluent',
+  'focused', 'follow', 'forest', 'forget', 'format', 'former', 'frozen', 'future', 'galaxy', 'garden',
+  'gather', 'gentle', 'global', 'golden', 'govern', 'grace', 'graph', 'ground', 'growth', 'guided',
+  'hammer', 'handle', 'happen', 'harbor', 'hardly', 'hazard', 'health', 'heart', 'heavy', 'height',
+  'hidden', 'higher', 'highly', 'honest', 'horizon', 'hosted', 'however', 'human', 'hybrid', 'iconic',
+  'ideal', 'ignore', 'image', 'impact', 'import', 'improve', 'income', 'indeed', 'index', 'indigo',
+  'infant', 'inform', 'inject', 'injury', 'input', 'inside', 'insist', 'intact', 'intent', 'invest',
+  'invite', 'island', 'itself', 'jacket', 'jargon', 'jazzy', 'jersey', 'jigsaw', 'jockey', 'joined',
+  'joking', 'journal', 'journey', 'joyful', 'judge', 'juggle', 'jumped', 'jungle', 'junior', 'justice',
+  'keeper', 'kernel', 'keyed', 'keypad', 'kindle', 'kingdom', 'knight', 'knives', 'knowing', 'knowledge',
+  'label', 'ladder', 'lambda', 'laptop', 'larger', 'latest', 'launch', 'lawyer', 'layout', 'leader',
+  'league', 'legacy', 'length', 'lesson', 'letter', 'level', 'liberty', 'library', 'light', 'likely',
+  'limits', 'linear', 'linger', 'linked', 'liquid', 'listen', 'little', 'lively', 'living', 'loaded',
+  'locate', 'locked', 'logic', 'longer', 'looked', 'losing', 'lounge', 'lovely', 'lowest', 'luxury',
+  'machine', 'magnet', 'mainly', 'making', 'manage', 'manner', 'manual', 'margin', 'marked', 'market',
+  'master', 'matrix', 'matter', 'maximum', 'meadow', 'meaning', 'measure', 'medium', 'member', 'memory',
+  'mental', 'mentor', 'merged', 'method', 'metric', 'middle', 'mighty', 'miller', 'minded', 'minimal',
+  'minute', 'mirror', 'mobile', 'modern', 'modify', 'module', 'moment', 'monitor', 'monkey', 'months',
+  'morale', 'mostly', 'motion', 'motive', 'moving', 'multiple', 'museum', 'mutual', 'mystic', 'narrow',
+  'nation', 'native', 'nature', 'nearby', 'nearly', 'neatly', 'needed', 'needle', 'neither', 'nested',
+  'network', 'neural', 'neutral', 'never', 'newest', 'nicely', 'nights', 'nimble', 'nobody', 'normal',
+  'notice', 'notion', 'novice', 'number', 'object', 'obtain', 'occupy', 'occurs', 'oceans', 'office',
+  'offset', 'online', 'opened', 'option', 'orange', 'orbit', 'orders', 'origin', 'output', 'oxygen',
+  'packet', 'paddle', 'palace', 'panels', 'papers', 'parent', 'parity', 'parked', 'partly', 'passed',
+  'patent', 'path', 'patrol', 'patron', 'pause', 'paying', 'peace', 'people', 'pepper', 'period',
+  'permit', 'person', 'phrase', 'picked', 'planet', 'player', 'please', 'pledge', 'plenty', 'pocket',
+  'poetry', 'points', 'policy', 'polish', 'portal', 'poster', 'powder', 'power', 'praise', 'prefer',
+  'prefix', 'pretty', 'prince', 'prints', 'prison', 'private', 'prize', 'process', 'profit', 'project',
+  'prompt', 'proper', 'proton', 'proven', 'public', 'pulse', 'purely', 'purple', 'pursue', 'puzzle',
+  'python', 'quaint', 'quality', 'quarks', 'quartz', 'queen', 'query', 'quest', 'queue', 'quick',
+  'quiet', 'quilt', 'quirky', 'quiver', 'quote', 'radial', 'radius', 'random', 'range', 'rapid',
+  'rarely', 'rather', 'rating', 'ratio', 'reader', 'ready', 'really', 'reason', 'recall', 'recent',
+  'record', 'reduce', 'reform', 'regard', 'regime', 'region', 'reject', 'relate', 'relax', 'release',
+  'remain', 'remark', 'remedy', 'remind', 'remote', 'remove', 'render', 'repair', 'repeat', 'reply',
+  'report', 'rescue', 'resist', 'resort', 'result', 'resume', 'retail', 'retain', 'retire', 'return',
+  'reveal', 'review', 'reward', 'rhythm', 'ribbon', 'richly', 'ridden', 'riding', 'right', 'rising',
+  'robust', 'rocket', 'roller', 'rotate', 'routed', 'router', 'rubber', 'ruling', 'runner', 'rustic',
+  'sacred', 'safety', 'salary', 'sample', 'saving', 'saying', 'scaled', 'scarce', 'scenes', 'scheme',
+  'school', 'science', 'screen', 'script', 'scroll', 'search', 'season', 'second', 'secret', 'sector',
+  'secure', 'seeing', 'select', 'seller', 'senate', 'senior', 'sense', 'series', 'server', 'settle',
+  'severe', 'shadow', 'shaped', 'shared', 'shield', 'shift', 'shining', 'short', 'should', 'shower',
+  'signal', 'silent', 'silver', 'simple', 'simply', 'single', 'sister', 'sketch', 'skills', 'slight',
+  'slowly', 'smooth', 'socket', 'softly', 'solely', 'solved', 'solver', 'sorted', 'source', 'spaces',
+  'sparse', 'speak', 'speedy', 'sphere', 'spiral', 'spirit', 'spoken', 'spread', 'spring', 'sprint',
+  'square', 'stable', 'stages', 'stance', 'stand', 'static', 'status', 'steady', 'stolen', 'stored',
+  'strain', 'strand', 'stream', 'street', 'stress', 'strict', 'stride', 'strike', 'string', 'strong',
+  'struck', 'studio', 'submit', 'subtle', 'sudden', 'suffer', 'summer', 'summit', 'supply', 'surely',
+  'survey', 'switch', 'symbol', 'syntax', 'system', 'tables', 'tackle', 'talent', 'target', 'taught',
+  'temple', 'tenant', 'tender', 'tennis', 'tested', 'thanks', 'theory', 'things', 'think', 'thirty',
+  'though', 'thread', 'threat', 'thrive', 'throat', 'thrown', 'ticket', 'timber', 'timing', 'tissue',
+  'titled', 'toggle', 'tokens', 'toward', 'tracks', 'traded', 'tragic', 'trains', 'traits', 'travel',
+  'treaty', 'trends', 'trials', 'tribal', 'tricky', 'triple', 'trophy', 'tunnel', 'turkey', 'turned',
+  'twenty', 'typing', 'ultima', 'unable', 'unfold', 'unique', 'united', 'unless', 'unlike', 'unlock',
+  'unpack', 'unsafe', 'unused', 'update', 'uphold', 'upload', 'upward', 'urgent', 'usable', 'useful',
+  'utopia', 'vacant', 'vacuum', 'valley', 'valued', 'values', 'vanish', 'varied', 'vector', 'velvet',
+  'vendor', 'verbal', 'verify', 'versus', 'vessel', 'viable', 'victim', 'victor', 'viewer', 'violet',
+  'violin', 'virtue', 'vision', 'visual', 'voices', 'volume', 'voters', 'vortex', 'vowels', 'voyage',
+  'waited', 'walker', 'wallet', 'wander', 'wanted', 'warmly', 'warned', 'wealth', 'weapon', 'weekly',
+  'weight', 'weird', 'welcome', 'widget', 'widths', 'window', 'winner', 'winter', 'wisdom', 'wishes',
+  'within', 'wizard', 'wolves', 'wonder', 'wooden', 'worker', 'worthy', 'writer', 'yellow', 'yields',
+  'zealous', 'zenith', 'zeroed', 'zigzag', 'zipper', 'zodiac', 'zoning',
+  'async()', 'await;', '{value}', '[index]', 'key:val', '"quote"', "'tick'", 'a=>b', 'x+y=z', 'err!=0',
+  'end.', 'one,two', 'path/to', 'dir\\file', '`code`', 'step-1', 'v2.0', 'id#34', '56+78', '90%',
+];
+
 /**
  * Generates random common words sequence for word-count drills (like Monkeytype)
  */
@@ -215,6 +295,69 @@ export function generateWordDrill(count: WordCount): Passage {
     difficulty: 'easy',
     category: 'words',
     content: words.join(' '),
+  };
+}
+
+/**
+ * Generates a targeted typing drill weighted toward the user's missed keys.
+ */
+export function generateWeakKeysDrill(
+  missedKeys: Record<string, number>,
+  wordCount: WordCount = 25
+): Passage {
+  const entries = Object.entries(missedKeys)
+    .filter(([key]) => key !== 'Space' && key.length === 1)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (entries.length === 0) {
+    return generateWordDrill(wordCount);
+  }
+
+  const targetKeys = entries.slice(0, 6).map(([k]) => k);
+  const scored = WEAK_KEY_WORD_BANK.map((word) => {
+    let score = 0;
+    for (const [key, count] of entries) {
+      const lowerKey = key.toLowerCase();
+      for (const ch of word) {
+        if (ch === key) {
+          score += count * 3;
+        } else if (ch.toLowerCase() === lowerKey) {
+          score += count * 1.5;
+        }
+      }
+    }
+    return { word, score };
+  })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const topPool = scored.slice(0, 36).map((s) => s.word);
+  const selectedWords: string[] = [];
+
+  for (let i = 0; i < wordCount; i++) {
+    if (topPool.length > 0 && (i % 5 !== 4 || topPool.length >= 10)) {
+      let candidate = topPool[Math.floor(Math.random() * Math.min(topPool.length, 20))];
+      // If user missed an uppercase letter and candidate starts with lowercase version, capitalize it
+      const matchedUpper = targetKeys.find(
+        (k) => k >= 'A' && k <= 'Z' && candidate[0]?.toLowerCase() === k.toLowerCase()
+      );
+      if (matchedUpper && Math.random() < 0.6) {
+        candidate = candidate[0].toUpperCase() + candidate.slice(1);
+      }
+      selectedWords.push(candidate);
+    } else {
+      selectedWords.push(COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)]);
+    }
+  }
+
+  const keySummary = targetKeys.slice(0, 4).join(', ');
+  return {
+    id: `weak-keys-${Date.now()}`,
+    title: `Weak Keys Drill (${keySummary})`,
+    author: 'Targeted Accuracy Training',
+    difficulty: 'medium',
+    category: 'words',
+    content: selectedWords.join(' '),
   };
 }
 

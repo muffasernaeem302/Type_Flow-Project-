@@ -18,9 +18,14 @@ export const typeflowBridge: TypeflowAPI = {
       caretStyle: 'line',
       soundProfile: 'mechanical',
       soundVolume: 0.6,
+      congratsSound: true,
       focusMode: false,
       liveStatsVisible: true,
       ghostMode: 'pb',
+      dailyGoal: 5,
+      challengeMode: 'none',
+      minWpmFloor: 40,
+      stopOnError: false,
     };
   },
 
@@ -32,9 +37,14 @@ export const typeflowBridge: TypeflowAPI = {
       caretStyle: 'line',
       soundProfile: 'mechanical',
       soundVolume: 0.6,
+      congratsSound: true,
       focusMode: false,
       liveStatsVisible: true,
       ghostMode: 'pb',
+      dailyGoal: 5,
+      challengeMode: 'none',
+      minWpmFloor: 40,
+      stopOnError: false,
       ...settings,
     };
   },
@@ -66,6 +76,16 @@ export const typeflowBridge: TypeflowAPI = {
   exportHistoryCSV: async (): Promise<{ success: boolean; filePath?: string; content?: string }> => {
     // ipcRenderer.invoke('export-csv')
     return { success: true };
+  },
+
+  exportProfileJSON: async (): Promise<{ success: boolean; filePath?: string; content?: string }> => {
+    // ipcRenderer.invoke('export-profile-json')
+    return { success: true };
+  },
+
+  importProfileJSON: async (_rawJson: string): Promise<{ success: boolean; importedRuns: number; error?: string }> => {
+    // ipcRenderer.invoke('import-profile-json', rawJson)
+    return { success: true, importedRuns: 0 };
   },
 
   toggleFullscreen: async (): Promise<boolean> => {

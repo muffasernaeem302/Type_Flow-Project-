@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Chart as ChartJS,
+  LineController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -20,9 +21,11 @@ import {
   ChartData,
 } from 'chart.js';
 import { SecondSnapshot } from '../../shared/types.ts';
+import { ThemePalette, getThemePalette } from '../../shared/themes.ts';
 
 // Register Chart.js components
 ChartJS.register(
+  LineController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -36,9 +39,15 @@ ChartJS.register(
 interface TelemetryChartProps {
   timeline: SecondSnapshot[];
   isDark?: boolean;
+  themePalette?: ThemePalette;
 }
 
-export const TelemetryChart: React.FC<TelemetryChartProps> = ({ timeline, isDark = true }) => {
+export const TelemetryChart: React.FC<TelemetryChartProps> = ({
+  timeline,
+  isDark = true,
+  themePalette,
+}) => {
+  const palette = themePalette ?? getThemePalette(isDark ? 'cyberpunk' : 'light', isDark);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstanceRef = useRef<ChartJS | null>(null);
   const [hasError, setHasError] = useState<boolean>(false);
@@ -71,7 +80,7 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({ timeline, isDark
       const rawWpmData = safeTimeline.map((s) => s.rawWpm);
 
       const textColor = isDark ? '#94a3b8' : '#475569';
-      const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)';
+      const gridColor = isDark ? palette.gridStroke : 'rgba(0, 0, 0, 0.06)';
 
       const data: ChartData<'line'> = {
         labels,
@@ -79,28 +88,28 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({ timeline, isDark
           {
             label: 'Net WPM',
             data: netWpmData,
-            borderColor: '#00f5d4',
-            backgroundColor: isDark ? 'rgba(0, 245, 212, 0.08)' : 'rgba(0, 245, 212, 0.15)',
+            borderColor: palette.accent,
+            backgroundColor: isDark ? `${palette.accent}1a` : `${palette.accent}26`,
             borderWidth: 2.5,
             tension: 0.35,
             fill: true,
             pointRadius: safeTimeline.length > 40 ? 1 : 3,
             pointHoverRadius: 6,
-            pointBackgroundColor: '#00f5d4',
-            pointBorderColor: '#0b0514',
+            pointBackgroundColor: palette.accent,
+            pointBorderColor: palette.bg,
             pointBorderWidth: 2,
           },
           {
             label: 'Raw WPM',
             data: rawWpmData,
-            borderColor: '#f72585',
+            borderColor: palette.accent2,
             borderWidth: 1.5,
             borderDash: [4, 4],
             tension: 0.35,
             fill: false,
             pointRadius: 0,
             pointHoverRadius: 4,
-            pointBackgroundColor: '#f72585',
+            pointBackgroundColor: palette.accent2,
           },
         ],
       };
@@ -132,10 +141,10 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({ timeline, isDark
             },
           },
           tooltip: {
-            backgroundColor: isDark ? '#140c24' : '#ffffff',
+            backgroundColor: isDark ? palette.elevated : '#ffffff',
             titleColor: isDark ? '#f8fafc' : '#0f172a',
             bodyColor: isDark ? '#cbd5e1' : '#334155',
-            borderColor: isDark ? '#2e1b4e' : '#e2e8f0',
+            borderColor: isDark ? palette.border : '#e2e8f0',
             borderWidth: 1,
             padding: 10,
             displayColors: true,
@@ -213,7 +222,7 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({ timeline, isDark
         chartInstanceRef.current = null;
       }
     };
-  }, [timeline, isDark]);
+  }, [timeline, isDark, palette]);
 
   if (hasError) {
     return (

@@ -51,15 +51,18 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
   const charCount = customText.length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-2xl border border-purple-900/50 bg-[#140c24] rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_48px_rgba(0,0,0,0.6)] select-none"
+        className="w-full max-w-2xl border border-tf-border/50 bg-tf-elevated rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_48px_rgba(0,0,0,0.6)] select-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-purple-900/30">
+        <div className="flex items-center justify-between pb-3 border-b border-tf-border/30">
           <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-[#00f5d4]" />
+            <Code className="w-5 h-5 text-tf-accent" />
             <h2 className="text-base font-bold text-slate-100">Custom Text & Code Drills</h2>
           </div>
           <button
@@ -71,12 +74,12 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
         </div>
 
         {/* Tab switch */}
-        <div className="flex items-center gap-2 border-b border-purple-900/30 pb-2">
+        <div className="flex items-center gap-2 border-b border-tf-border/30 pb-2">
           <button
             onClick={() => setActiveTab('custom')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               activeTab === 'custom'
-                ? 'bg-[#00f5d4] text-slate-950 shadow-sm'
+                ? 'bg-tf-accent text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
@@ -88,7 +91,7 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
             onClick={() => setActiveTab('code')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               activeTab === 'code'
-                ? 'bg-[#00f5d4] text-slate-950 shadow-sm'
+                ? 'bg-tf-accent text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
@@ -107,7 +110,7 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
                 placeholder="e.g. JavaScript Async Interview Drill"
-                className="w-full bg-[#0b0514] border border-purple-900/40 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#00f5d4]"
+                className="w-full bg-tf-bg border border-tf-border/40 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-tf-accent"
               />
             </div>
 
@@ -123,7 +126,7 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
                 onChange={(e) => setCustomText(e.target.value)}
                 placeholder="Paste any article paragraph, medical dictionary, legal text, or custom phrase here..."
                 rows={7}
-                className="w-full bg-[#0b0514] border border-purple-900/40 rounded-lg p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-[#00f5d4] resize-none leading-relaxed"
+                className="w-full bg-tf-bg border border-tf-border/40 rounded-lg p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-tf-accent resize-none leading-relaxed"
               />
             </div>
 
@@ -131,7 +134,7 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
               <button
                 onClick={handleStartCustom}
                 disabled={!customText.trim()}
-                className="px-5 py-2.5 rounded-lg bg-[#00f5d4] hover:bg-[#26ffe2] text-slate-950 font-bold text-xs flex items-center gap-2 shadow-[0_0_14px_rgba(0,245,212,0.3)] disabled:opacity-40 disabled:pointer-events-none transition-transform hover:scale-[1.02]"
+                className="px-5 py-2.5 rounded-lg bg-tf-accent hover:bg-tf-accent-hover text-slate-950 font-bold text-xs flex items-center gap-2 shadow-[0_0_14px_color-mix(in_srgb,var(--tf-accent)_35%,transparent)] disabled:opacity-40 disabled:pointer-events-none transition-transform hover:scale-[1.02]"
               >
                 <Play className="w-3.5 h-3.5 fill-slate-950" />
                 <span>Load & Start Custom Drill</span>
@@ -148,13 +151,13 @@ export const CustomPassageModal: React.FC<CustomPassageModalProps> = ({
                 <div
                   key={snippet.id}
                   onClick={() => handleSelectCode(snippet)}
-                  className="p-3 rounded-xl border border-purple-900/30 bg-[#0b0514]/70 hover:bg-[#00f5d4]/5 hover:border-[#00f5d4]/40 cursor-pointer transition-all flex flex-col gap-1.5 group"
+                  className="p-3 rounded-xl border border-tf-border/30 bg-tf-bg/70 hover:bg-tf-accent/5 hover:border-tf-accent/40 cursor-pointer transition-all flex flex-col gap-1.5 group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-200 group-hover:text-[#00f5d4] transition-colors">
+                    <span className="text-xs font-semibold text-slate-200 group-hover:text-tf-accent transition-colors">
                       {snippet.title}
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/40 text-purple-300 border border-purple-800/30 capitalize">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-tf-elevated text-tf-accent border border-tf-border/40 capitalize">
                       {snippet.difficulty}
                     </span>
                   </div>

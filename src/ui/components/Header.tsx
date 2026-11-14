@@ -36,19 +36,19 @@ export const Header: React.FC<HeaderProps> = ({
   const isMuted = settings.soundProfile === 'muted' || settings.soundVolume <= 0;
 
   return (
-    <header className="h-14 w-full border-b border-purple-900/30 bg-[#0b0514]/90 backdrop-blur-md px-6 flex items-center justify-between gap-8 select-none z-50">
+    <header className="h-14 w-full border-b border-tf-border/30 bg-tf-bg/90 backdrop-blur-md px-6 flex items-center justify-between gap-8 select-none z-50">
       {/* Zone 1: Single text element wordmark */}
       <div className="flex items-center gap-3 shrink-0">
         <button
           onClick={() => onNavigate('home')}
-          className="flex items-center gap-2.5 text-left group focus-visible:ring-1 focus-visible:ring-[#00f5d4] rounded"
+          className="flex items-center gap-2.5 text-left group focus-visible:ring-1 focus-visible:ring-tf-accent rounded"
         >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00f5d4] to-[#f72585] p-0.5 flex items-center justify-center shadow-[0_0_12px_rgba(0,245,212,0.4)]">
-            <div className="w-full h-full bg-[#0b0514] rounded-[6px] flex items-center justify-center">
-              <span className="font-mono text-xs font-black text-[#00f5d4]">TF</span>
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-tf-accent to-tf-accent-2 p-0.5 flex items-center justify-center shadow-[0_0_12px_color-mix(in_srgb,var(--tf-accent)_40%,transparent)]">
+            <div className="w-full h-full bg-tf-bg rounded-[6px] flex items-center justify-center">
+              <span className="font-mono text-xs font-black text-tf-accent">TF</span>
             </div>
           </div>
-          <span className="font-sans text-base font-bold tracking-tight text-slate-100 group-hover:text-[#00f5d4] transition-colors whitespace-nowrap">
+          <span className="font-sans text-base font-bold tracking-tight text-slate-100 group-hover:text-tf-accent transition-colors whitespace-nowrap">
             TypeFlow
           </span>
         </button>
@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => onNavigate('home')}
           className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 hover:text-slate-100 ${
             currentView === 'home' || currentView === 'test' || currentView === 'results'
-              ? 'text-[#00f5d4] font-semibold'
+              ? 'text-tf-accent font-semibold'
               : ''
           }`}
         >
@@ -71,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={() => onNavigate('history')}
           className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 hover:text-slate-100 ${
-            currentView === 'history' ? 'text-[#00f5d4] font-semibold' : ''
+            currentView === 'history' ? 'text-tf-accent font-semibold' : ''
           }`}
         >
           <History className="w-4 h-4" />
@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="p-1.5 text-slate-400 hover:text-slate-100 transition-colors rounded hover:bg-white/5"
           aria-label={isMuted ? 'Unmute sound' : 'Mute sound'}
         >
-          {isMuted ? <VolumeX className="w-4 h-4 text-slate-500" /> : <Volume2 className="w-4 h-4 text-[#00f5d4]" />}
+          {isMuted ? <VolumeX className="w-4 h-4 text-slate-500" /> : <Volume2 className="w-4 h-4 text-tf-accent" />}
         </button>
 
         {/* Focus mode indicator */}
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onToggleFocusMode}
           title={settings.focusMode ? 'Disable Focus Mode' : 'Enable Focus Mode (hides chrome during tests)'}
           className={`p-1.5 transition-colors rounded hover:bg-white/5 ${
-            settings.focusMode ? 'text-[#f72585]' : 'text-slate-400 hover:text-slate-100'
+            settings.focusMode ? 'text-tf-accent-2' : 'text-slate-400 hover:text-slate-100'
           }`}
           aria-label="Toggle focus mode"
         >
@@ -122,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Desktop Window Controls */}
-        <div className="h-4 w-px bg-purple-900/40 mx-1" />
+        <div className="h-4 w-px bg-tf-border/40 mx-1" />
 
         <div className="flex items-center gap-1">
           <button

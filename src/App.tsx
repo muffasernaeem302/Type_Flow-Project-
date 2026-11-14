@@ -22,8 +22,15 @@ import {
   WordCount,
   TestMode,
   TestResult,
+  AiTrendAnalysis,
 } from './shared/types.ts';
-import { getRandomPassage } from './data/texts.ts';
+import { getThemePalette, isLightTheme, resolveEffectiveTheme } from './shared/themes.ts';
+import {
+  DEFAULT_WALLPAPER_BLUR,
+  DEFAULT_WALLPAPER_DIM,
+  resolveWallpaperSrc,
+} from './ui/wallpapers.ts';
+import { getRandomPassage, generateWeakKeysDrill, generateWordDrill } from './data/texts.ts';
 import { soundSynth } from './audio/synth.ts';
 import { RotateCcw, AlertTriangle } from 'lucide-react';
 
@@ -69,7 +76,7 @@ class AppErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
               this.setState({ hasError: false });
               this.props.onReset();
             }}
-            className="mt-2 px-5 py-2.5 rounded-lg bg-[#00f5d4] text-slate-950 font-bold text-xs flex items-center gap-2 hover:bg-[#26ffe2] shadow-[0_0_16px_rgba(0,245,212,0.3)] transition-transform hover:scale-[1.02]"
+            className="mt-2 px-5 py-2.5 rounded-lg bg-tf-accent text-slate-950 font-bold text-xs flex items-center gap-2 hover:bg-tf-accent-hover shadow-[0_0_16px_color-mix(in_srgb,var(--tf-accent)_35%,transparent)] transition-transform hover:scale-[1.02]"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Return to Home</span>
@@ -89,9 +96,17 @@ export default function App() {
     caretStyle: 'line',
     soundProfile: 'mechanical',
     soundVolume: 0.6,
+    congratsSound: true,
     focusMode: false,
     liveStatsVisible: true,
     ghostMode: 'pb',
+    dailyGoal: 5,
+    challengeMode: 'none',
+    minWpmFloor: 40,
+    stopOnError: false,
+    wallpaper: 'none',
+    wallpaperDim: DEFAULT_WALLPAPER_DIM,
+    wallpaperBlur: DEFAULT_WALLPAPER_BLUR,
   });
 
   const [history, setHistory] = useState<TestResult[]>([]);
@@ -108,9 +123,13 @@ export default function App() {
   const [selectedDuration, setSelectedDuration] = useState<TestDuration>(30);
   const [selectedWordCount, setSelectedWordCount] = useState<WordCount>(25);
   const [customPassage, setCustomPassage] = useState<Passage | null>(null);
+  const [dictationAudioSrc, setDictationAudioSrc] = useState<string | null>(null);
+  const [dictationBlindMode, setDictationBlindMode] = useState<boolean>(true);
 
   const [activePassage, setActivePassage] = useState<Passage>(() => getRandomPassage('medium'));
   const [latestResult, setLatestResult] = useState<TestResult | null>(null);
+  const [testRunKey, setTestRunKey] = useState<number>(0);
+  const [wallpaperError, setWallpaperError] = useState<boolean>(false);
 
   // Load initial settings and history from Bridge
   useEffect(() => {
@@ -127,7 +146,11 @@ export default function App() {
           setSettings(savedSettings);
           setHistory(savedHistory);
           setPersonalBests(savedPbs);
-          soundSynth.setConfig(savedSettings.soundProfile, savedSettings.soundVolume);
+          soundSynth.setConfig(
+            savedSettings.soundProfile,
+            savedSettings.soundVolume,
+            savedSettings.congratsSound ?? true
+          );
         }
       } catch (err) {
         console.warn('TypeFlow storage initialization warning:', err);
@@ -139,32 +162,58 @@ export default function App() {
     };
   }, []);
 
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : true
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   // Sync theme changes with DOM
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.theme === 'light') {
+    const effective = resolveEffectiveTheme(settings.theme, systemPrefersDark);
+    root.dataset.theme = effective;
+
+    if (effective === 'light') {
       root.classList.remove('dark');
       root.classList.add('light');
-    } else if (settings.theme === 'cyberpunk') {
+    } else {
       root.classList.remove('light');
       root.classList.add('dark');
-    } else {
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (systemDark) {
-        root.classList.add('dark');
-        root.classList.remove('light');
-      } else {
-        root.classList.remove('dark');
-        root.classList.add('light');
-      }
     }
-  }, [settings.theme]);
+  }, [settings.theme, systemPrefersDark]);
+
+  const handleReloadProfile = useCallback(async () => {
+    try {
+      const [savedSettings, savedHistory, savedPbs] = await Promise.all([
+        api.getSettings(),
+        api.getHistory(),
+        api.getPersonalBests(),
+      ]);
+      setSettings(savedSettings);
+      setHistory(savedHistory);
+      setPersonalBests(savedPbs);
+      soundSynth.setConfig(
+        savedSettings.soundProfile,
+        savedSettings.soundVolume,
+        savedSettings.congratsSound ?? true
+      );
+    } catch (err) {
+      console.warn('TypeFlow profile reload error:', err);
+    }
+  }, []);
 
   // Update and persist settings
   const handleUpdateSettings = async (partial: Partial<AppSettings>) => {
     const updated = await api.saveSettings(partial);
     setSettings(updated);
-    soundSynth.setConfig(updated.soundProfile, updated.soundVolume);
+    soundSynth.setConfig(updated.soundProfile, updated.soundVolume, updated.congratsSound ?? true);
   };
 
   const handleToggleSound = async () => {
@@ -183,13 +232,22 @@ export default function App() {
       mode: TestMode,
       duration?: TestDuration,
       wordCount?: WordCount,
-      difficulty?: Difficulty
+      difficulty?: Difficulty,
+      audioSrc?: string | null,
+      blindMode?: boolean
     ) => {
       setActivePassage(passage);
       setTestMode(mode);
       if (duration) setSelectedDuration(duration);
       if (wordCount) setSelectedWordCount(wordCount);
       if (difficulty) setSelectedDifficulty(difficulty);
+      if (mode === 'dictation') {
+        if (audioSrc !== undefined) setDictationAudioSrc(audioSrc);
+        if (blindMode !== undefined) setDictationBlindMode(blindMode);
+      } else {
+        setDictationAudioSrc(null);
+      }
+      setTestRunKey((k) => k + 1);
       setCurrentView('test');
     },
     []
@@ -207,6 +265,8 @@ export default function App() {
           ? `time-${saved.difficulty}-${saved.duration}`
           : saved.mode === 'words'
           ? `words-${saved.targetWords}`
+          : saved.mode === 'dictation'
+          ? `dictation-${saved.difficulty}`
           : 'zen';
 
       if (saved.isPersonalBest) {
@@ -221,6 +281,14 @@ export default function App() {
         }));
       }
 
+      if (!saved.challengeFailed) {
+        try {
+          soundSynth.playCompletionChime(Boolean(saved.isPersonalBest));
+        } catch {
+          // Ignore audio errors
+        }
+      }
+
       setCurrentView('results');
     } catch (err) {
       console.warn('TypeFlow storage save fallback:', err);
@@ -229,19 +297,87 @@ export default function App() {
         id: `test_${Date.now()}`,
         timestamp: Date.now(),
       };
+      if (!fallbackResult.challengeFailed) {
+        try {
+          soundSynth.playCompletionChime(false);
+        } catch {
+          // Ignore audio errors
+        }
+      }
       setLatestResult(fallbackResult);
       setCurrentView('results');
     }
   };
 
   const handleRetryPassage = useCallback(() => {
+    setTestRunKey((k) => k + 1);
     setCurrentView('test');
   }, []);
 
   const handleNewPassage = useCallback(() => {
+    setDictationAudioSrc(null);
     setActivePassage(getRandomPassage(selectedDifficulty, activePassage.id));
+    setTestRunKey((k) => k + 1);
     setCurrentView('test');
   }, [selectedDifficulty, activePassage.id]);
+
+  const handlePracticeWeakKeys = useCallback((missedKeys: Record<string, number>) => {
+    const drillPassage = generateWeakKeysDrill(missedKeys, 25);
+    setDictationAudioSrc(null);
+    setActivePassage(drillPassage);
+    setTestMode('words');
+    setSelectedWordCount(25);
+    setSelectedDifficulty('medium');
+    setTestRunKey((k) => k + 1);
+    setCurrentView('test');
+  }, []);
+
+  const handleLaunchRecommendedDrill = useCallback(
+    (mode: AiTrendAnalysis['recommendedMode'], focusKeys: string[]) => {
+      if (mode === 'weak_keys') {
+        const keyMap: Record<string, number> = {};
+        for (const rawKey of focusKeys) {
+          const clean = rawKey.trim().toLowerCase();
+          if (clean.length === 1) {
+            keyMap[clean] = (keyMap[clean] || 0) + 5;
+          }
+        }
+        if (Object.keys(keyMap).length === 0) {
+          for (const run of history) {
+            if (!run.missedKeys) continue;
+            for (const [k, count] of Object.entries(run.missedKeys)) {
+              keyMap[k] = (keyMap[k] || 0) + count;
+            }
+          }
+        }
+        if (Object.keys(keyMap).length === 0) {
+          keyMap.e = 5;
+          keyMap.t = 5;
+          keyMap.a = 5;
+        }
+        handlePracticeWeakKeys(keyMap);
+        return;
+      }
+
+      if (mode === 'words') {
+        const drill = generateWordDrill(selectedWordCount);
+        handleStartTest(drill, 'words', undefined, selectedWordCount, selectedDifficulty);
+        return;
+      }
+
+      if (mode === 'dictation') {
+        setCustomPassage(null);
+        setDictationAudioSrc(null);
+        setTestMode('dictation');
+        setCurrentView('home');
+        return;
+      }
+
+      const passage = getRandomPassage(selectedDifficulty);
+      handleStartTest(passage, 'time', selectedDuration, undefined, selectedDifficulty);
+    },
+    [history, selectedWordCount, selectedDifficulty, selectedDuration, handlePracticeWeakKeys, handleStartTest]
+  );
 
   const handleClearHistory = async () => {
     await api.clearHistory();
@@ -252,10 +388,25 @@ export default function App() {
   // Keyboard shortcuts (Ctrl/Cmd+N, Ctrl/Cmd+R, Ctrl/Cmd+,, Ctrl/Cmd+H, Esc, ?)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Shortcuts modal toggle: ? (Shift+/) or F1
-      if ((e.key === '?' || e.key === 'F1') && currentView !== 'test') {
-        e.preventDefault();
-        setIsShortcutsOpen((prev) => !prev);
+      const target = e.target as HTMLElement | null;
+      const isTextInput =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable);
+
+      // Escape key to close modals or navigate home
+      if (e.key === 'Escape') {
+        if (isSettingsOpen || isShortcutsOpen || isCustomModalOpen) {
+          setIsSettingsOpen(false);
+          setIsShortcutsOpen(false);
+          setIsCustomModalOpen(false);
+          return;
+        }
+        if (currentView !== 'home' && currentView !== 'test' && currentView !== 'results') {
+          setCurrentView('home');
+        }
         return;
       }
 
@@ -263,6 +414,17 @@ export default function App() {
       if ((e.ctrlKey || e.metaKey) && e.key === ',') {
         e.preventDefault();
         setIsSettingsOpen((prev) => !prev);
+        return;
+      }
+
+      if (isTextInput || isSettingsOpen || isShortcutsOpen || isCustomModalOpen) {
+        return;
+      }
+
+      // Shortcuts modal toggle: ? (Shift+/) or F1
+      if ((e.key === '?' || e.key === 'F1') && currentView !== 'test') {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
         return;
       }
 
@@ -280,35 +442,63 @@ export default function App() {
         handleStartTest(nextPassage, testMode, selectedDuration, selectedWordCount, selectedDifficulty);
         return;
       }
-
-      // Escape key to navigate home or close modals
-      if (e.key === 'Escape') {
-        if (isSettingsOpen || isShortcutsOpen || isCustomModalOpen) {
-          setIsSettingsOpen(false);
-          setIsShortcutsOpen(false);
-          setIsCustomModalOpen(false);
-          return;
-        }
-        if (currentView !== 'home') {
-          setCurrentView('home');
-        }
-      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentView, isSettingsOpen, isShortcutsOpen, isCustomModalOpen, selectedDifficulty, selectedDuration, selectedWordCount, testMode, handleStartTest]);
 
-  const isDark = settings.theme !== 'light';
+  const isDark = !isLightTheme(settings.theme, systemPrefersDark);
+  const themePalette = getThemePalette(settings.theme, systemPrefersDark);
+  const isModalOpen = isSettingsOpen || isShortcutsOpen || isCustomModalOpen;
+  const activeWallpaperSrc = resolveWallpaperSrc(settings);
+  const showWallpaper = Boolean(activeWallpaperSrc) && !wallpaperError;
+  const wallpaperDim =
+    typeof settings.wallpaperDim === 'number' ? settings.wallpaperDim : DEFAULT_WALLPAPER_DIM;
+  const wallpaperBlur =
+    typeof settings.wallpaperBlur === 'number' ? settings.wallpaperBlur : DEFAULT_WALLPAPER_BLUR;
+
+  useEffect(() => {
+    setWallpaperError(false);
+  }, [activeWallpaperSrc]);
 
   return (
     <div
-      className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-200 ${
-        isDark
-          ? 'bg-[#0b0514] text-slate-100'
+      className={`relative min-h-screen w-full flex flex-col font-sans transition-colors duration-200 ${
+        showWallpaper
+          ? isDark
+            ? 'bg-transparent text-slate-100'
+            : 'bg-transparent text-slate-900'
+          : isDark
+          ? 'bg-tf-bg text-slate-100'
           : 'bg-slate-50 text-slate-900'
       }`}
     >
+      {/* Fixed Full-Viewport Wallpaper & Contrast Scrim Layer */}
+      {showWallpaper && activeWallpaperSrc && (
+        <div
+          aria-hidden="true"
+          className={`fixed inset-0 z-0 pointer-events-none overflow-hidden ${
+            isDark ? 'bg-tf-bg' : 'bg-slate-50'
+          }`}
+        >
+          <img
+            src={activeWallpaperSrc}
+            alt=""
+            referrerPolicy="no-referrer"
+            onError={() => setWallpaperError(true)}
+            className="w-full h-full object-cover scale-105 transition-[filter] duration-300"
+            style={wallpaperBlur > 0 ? { filter: `blur(${wallpaperBlur}px)` } : undefined}
+          />
+          <div
+            className={`absolute inset-0 transition-opacity duration-200 ${
+              isDark ? 'bg-tf-bg' : 'bg-slate-50'
+            }`}
+            style={{ opacity: wallpaperDim }}
+          />
+        </div>
+      )}
+
       {/* Top Bar Header */}
       <Header
         currentView={currentView}
@@ -322,28 +512,51 @@ export default function App() {
       />
 
       {/* Main Viewport Content */}
-      <main className="flex-1 flex flex-col justify-center py-4">
+      <main className="relative z-10 flex-1 flex flex-col justify-center py-4">
         <AppErrorBoundary onReset={() => setCurrentView('home')}>
           {currentView === 'home' && (
             <HomeView
               onStartTest={handleStartTest}
               personalBests={personalBests}
               selectedDifficulty={selectedDifficulty}
-              onChangeDifficulty={setSelectedDifficulty}
+              onChangeDifficulty={(diff) => {
+                setCustomPassage(null);
+                setDictationAudioSrc(null);
+                setSelectedDifficulty(diff);
+              }}
               selectedDuration={selectedDuration}
               onChangeDuration={setSelectedDuration}
               selectedWordCount={selectedWordCount}
-              onChangeWordCount={setSelectedWordCount}
+              onChangeWordCount={(count) => {
+                setCustomPassage(null);
+                setSelectedWordCount(count);
+              }}
               testMode={testMode}
-              onChangeTestMode={setTestMode}
+              onChangeTestMode={(mode) => {
+                setCustomPassage(null);
+                if (mode !== 'dictation') {
+                  setDictationAudioSrc(null);
+                }
+                setTestMode(mode);
+              }}
               customPassage={customPassage}
+              onClearCustomPassage={() => setCustomPassage(null)}
               onOpenCustomModal={() => setIsCustomModalOpen(true)}
+              onOpenHistory={() => setCurrentView('history')}
+              history={history}
+              isModalOpen={isModalOpen}
               settings={settings}
+              onUpdateSettings={handleUpdateSettings}
+              dictationAudioSrc={dictationAudioSrc}
+              onSetDictationAudio={setDictationAudioSrc}
+              dictationBlindMode={dictationBlindMode}
+              onChangeDictationBlindMode={setDictationBlindMode}
             />
           )}
 
           {currentView === 'test' && (
             <TestView
+              key={testRunKey}
               passage={activePassage}
               mode={testMode}
               duration={selectedDuration}
@@ -351,9 +564,11 @@ export default function App() {
               difficulty={selectedDifficulty}
               settings={settings}
               personalBests={personalBests}
+              dictationAudioSrc={dictationAudioSrc}
+              dictationBlindMode={dictationBlindMode}
               onFinish={handleFinishTest}
               onCancel={() => setCurrentView('home')}
-              onRestart={() => setCurrentView('test')}
+              onRestart={handleRetryPassage}
             />
           )}
 
@@ -363,9 +578,12 @@ export default function App() {
               passage={activePassage}
               onRetry={handleRetryPassage}
               onNewTest={handleNewPassage}
+              onPracticeWeakKeys={handlePracticeWeakKeys}
               onViewHistory={() => setCurrentView('history')}
               onBackHome={() => setCurrentView('home')}
               isDark={isDark}
+              themePalette={themePalette}
+              isModalOpen={isModalOpen}
             />
           )}
 
@@ -373,8 +591,14 @@ export default function App() {
             <HistoryView
               history={history}
               personalBests={personalBests}
+              dailyGoal={settings.dailyGoal}
+              onPracticeWeakKeys={handlePracticeWeakKeys}
+              onLaunchRecommendedDrill={handleLaunchRecommendedDrill}
               onClearHistory={handleClearHistory}
+              onProfileImported={handleReloadProfile}
               onBack={() => setCurrentView('home')}
+              isDark={isDark}
+              themePalette={themePalette}
             />
           )}
         </AppErrorBoundary>
@@ -386,6 +610,7 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
+        onProfileImported={handleReloadProfile}
       />
 
       {/* Shortcuts Cheat Sheet Modal */}
@@ -401,6 +626,9 @@ export default function App() {
         onSelectPassage={(passage) => {
           setCustomPassage(passage);
           setActivePassage(passage);
+          if (testMode === 'words') {
+            setTestMode('time');
+          }
         }}
       />
     </div>

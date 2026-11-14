@@ -16,7 +16,7 @@ export const Caret: React.FC<CaretProps> = ({ style }) => {
     return (
       <span
         aria-hidden="true"
-        className="absolute inset-0 -mx-[1px] bg-[#00f5d4]/35 border border-[#00f5d4] shadow-[0_0_12px_rgba(0,245,212,0.6)] animate-caret pointer-events-none rounded-[1px] z-10"
+        className="absolute inset-0 -mx-[1px] bg-tf-accent/35 border border-tf-accent shadow-[0_0_12px_color-mix(in_srgb,var(--tf-accent)_60%,transparent)] animate-caret pointer-events-none rounded-[1px] z-10"
       />
     );
   }
@@ -25,7 +25,7 @@ export const Caret: React.FC<CaretProps> = ({ style }) => {
     return (
       <span
         aria-hidden="true"
-        className="absolute left-0 right-0 -bottom-[2px] h-[3px] bg-[#00f5d4] shadow-[0_0_10px_#00f5d4] animate-caret pointer-events-none z-10 rounded-full"
+        className="absolute left-0 right-0 -bottom-[2px] h-[3px] bg-tf-accent shadow-[0_0_10px_var(--tf-accent)] animate-caret pointer-events-none z-10 rounded-full"
       />
     );
   }
@@ -34,7 +34,7 @@ export const Caret: React.FC<CaretProps> = ({ style }) => {
   return (
     <span
       aria-hidden="true"
-      className="absolute -left-[2px] top-[8%] bottom-[8%] w-[2.5px] bg-[#00f5d4] shadow-[0_0_12px_#00f5d4] animate-caret pointer-events-none rounded-full z-10"
+      className="absolute -left-[2px] top-[8%] bottom-[8%] w-[2.5px] bg-tf-accent shadow-[0_0_12px_var(--tf-accent)] animate-caret pointer-events-none rounded-full z-10"
     />
   );
 };

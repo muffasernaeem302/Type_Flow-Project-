@@ -12,6 +12,7 @@ class SoundSynthesizer {
   private isMuted: boolean = false;
   private volume: number = 0.5;
   private profile: SoundProfile = 'mechanical';
+  private congratsEnabled: boolean = true;
 
   private initContext(): AudioContext | null {
     try {
@@ -33,10 +34,11 @@ class SoundSynthesizer {
     }
   }
 
-  public setConfig(profile: SoundProfile, volume: number): void {
+  public setConfig(profile: SoundProfile, volume: number, congratsEnabled: boolean = true): void {
     this.profile = profile;
     this.volume = Math.max(0, Math.min(1, volume));
     this.isMuted = profile === 'muted' || volume <= 0;
+    this.congratsEnabled = congratsEnabled;
   }
 
   public playKeyClick(isSpace: boolean = false, isError: boolean = false): void {
@@ -258,53 +260,89 @@ class SoundSynthesizer {
   }
 
   /**
-   * Celebratory chime / typewriter carriage return bell
+   * Celebratory congrats sound effect on task completion (with elevated fanfare for Personal Bests)
    */
-  public playCompletionChime(): void {
+  public playCompletionChime(isPersonalBest: boolean = false, forcePlay: boolean = false): void {
     try {
-      if (this.isMuted || this.profile === 'muted' || this.volume <= 0) return;
+      if (!forcePlay && (!this.congratsEnabled || this.isMuted || this.profile === 'muted' || this.volume <= 0)) {
+        return;
+      }
       const ctx = this.initContext();
       if (!ctx) return;
 
+      const effectiveVol = Math.max(0.15, this.volume);
       const now = ctx.currentTime;
 
-      if (this.profile === 'typewriter') {
-        // Classic metallic desk bell ding (Ding!)
-        const bellOsc = ctx.createOscillator();
-        const bellGain = ctx.createGain();
-        bellOsc.type = 'sine';
-        bellOsc.frequency.setValueAtTime(2093, now); // C7 bell ring
-
-        bellGain.gain.setValueAtTime(0.001, now);
-        bellGain.gain.linearRampToValueAtTime(Math.max(0.001, this.volume * 0.6), now + 0.01);
-        bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-
-        bellOsc.connect(bellGain);
-        bellGain.connect(ctx.destination);
-
-        bellOsc.start(now);
-        bellOsc.stop(now + 1.25);
-        return;
-      }
-
-      // Harmonic chords
-      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-      notes.forEach((freq, idx) => {
+      const playTone = (
+        freq: number,
+        startOffset: number,
+        duration: number,
+        gainAmount: number,
+        wave: OscillatorType = 'triangle'
+      ) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
+        const startTime = now + startOffset;
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, startTime);
 
-        gain.gain.setValueAtTime(0.001, now + idx * 0.08);
-        gain.gain.linearRampToValueAtTime(Math.max(0.001, this.volume * 0.25), now + idx * 0.08 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.4);
+        gain.gain.setValueAtTime(0.001, startTime);
+        gain.gain.linearRampToValueAtTime(Math.max(0.002, effectiveVol * gainAmount), startTime + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0005, startTime + duration);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
 
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.45);
+        osc.start(startTime);
+        osc.stop(startTime + duration + 0.03);
+      };
+
+      if (this.profile === 'typewriter') {
+        // Classic metallic carriage-return desk bell + celebratory sparkle
+        playTone(2093, 0, 0.9, 0.5, 'sine');
+        playTone(4186, 0, 0.5, 0.18, 'sine');
+        const bellNotes = isPersonalBest ? [523.25, 659.25, 783.99, 1046.5, 1318.51] : [523.25, 659.25, 783.99, 1046.5];
+        bellNotes.forEach((freq, idx) => {
+          playTone(freq, 0.14 + idx * 0.075, 0.45, 0.28, 'triangle');
+        });
+        return;
+      }
+
+      if (isPersonalBest) {
+        // Triumphant Personal Best victory fanfare with warm sub-pad & sparkling octave arpeggio
+        playTone(261.63, 0, 0.9, 0.24, 'sine'); // C4 pad
+        playTone(392.0, 0.08, 0.85, 0.2, 'sine'); // G4 pad
+
+        const pbArpeggio = [
+          { freq: 523.25, offset: 0.0, dur: 0.35 },   // C5
+          { freq: 659.25, offset: 0.07, dur: 0.35 },  // E5
+          { freq: 783.99, offset: 0.14, dur: 0.35 },  // G5
+          { freq: 1046.5, offset: 0.22, dur: 0.55 },  // C6
+          { freq: 1318.51, offset: 0.31, dur: 0.65 }, // E6
+          { freq: 1567.98, offset: 0.40, dur: 0.85 }, // G6
+        ];
+
+        pbArpeggio.forEach(({ freq, offset, dur }) => {
+          playTone(freq, offset, dur, 0.38, 'triangle');
+          playTone(freq * 2, offset + 0.01, dur * 0.65, 0.12, 'sine');
+        });
+        return;
+      }
+
+      // Uplifting task-completion congrats chime (C major 9 arpeggio + warm harmonic chord)
+      playTone(261.63, 0, 0.65, 0.18, 'sine'); // Warm C4 root
+      const notes = [
+        { freq: 523.25, offset: 0.0, dur: 0.32 },  // C5
+        { freq: 659.25, offset: 0.07, dur: 0.34 }, // E5
+        { freq: 783.99, offset: 0.14, dur: 0.38 }, // G5
+        { freq: 987.77, offset: 0.21, dur: 0.45 }, // B5
+        { freq: 1046.5, offset: 0.28, dur: 0.65 }, // C6
+      ];
+
+      notes.forEach(({ freq, offset, dur }) => {
+        playTone(freq, offset, dur, 0.34, 'triangle');
+        playTone(freq * 2, offset, dur * 0.6, 0.1, 'sine');
       });
     } catch (err) {
       console.warn('TypeFlow completion chime warning:', err);
